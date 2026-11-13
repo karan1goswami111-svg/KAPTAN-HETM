@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify OTP & Reset Password - KAPTAN-HETM</title>
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #111827; padding: 40px; border-radius: 12px; border: 1px solid #1f2937; width: 100%; max-width: 400px; text-align: center; }
+        .form-control { width: 100%; padding: 12px; margin: 15px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .btn { width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .btn:hover { background: #047857; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Verify OTP</h2>
+        <p style="color: #9ca3af; font-size: 13px;">Enter the 6-digit OTP sent to your mobile and your new password.</p>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="otp" class="form-control" placeholder="Enter 6-digit OTP" required>
+            <input type="password" name="new_password" class="form-control" placeholder="Enter New Password" required>
+            <button type="submit" class="btn">Reset Password ➔</button>
+        </form>
+    </div>
+</body>
+</html>

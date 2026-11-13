@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile Settings - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        nav { background: #111827; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; border: 1px solid #3b82f6; }
+        .container { padding: 40px; max-width: 600px; margin: auto; }
+        .card { background: #111827; padding: 30px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; }
+        .form-control { width: 100%; padding: 10px; margin: 8px 0 15px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; }
+        .form-control:disabled { background: #111827; color: #6b7280; border-color: #1f2937; cursor: not-allowed; }
+        .btn { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; width: 100%; }
+        .btn:hover { background: #1d4ed8; }
+        .alert-success { background: rgba(5, 150, 105, 0.2); border: 1px solid #059669; color: #34d399; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo-section">
+            <img src="{% static 'core/logo.png' %}" alt="KAPTAN Logo" class="nav-logo">
+            <h3 style="margin: 0;">KAPTAN-HETM &nbsp;|&nbsp; <span style="color: #38bdf8; font-size: 15px;">Profile & Security</span></h3>
+        </div>
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn" style="padding: 6px 15px; width: auto;">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <h2 style="margin-top: 0; color: #3b82f6;">⚙️ Account Settings</h2>
+            <p style="color: #9ca3af; font-size: 13px; margin-bottom: 25px;">Manage your login credentials, locked email identity, and mobile number.</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <label style="font-size: 13px; color: #9ca3af;">Display Name:</label>
+                <input type="text" value="{{ display_name }}" class="form-control" disabled>
+
+                <label style="font-size: 13px; color: #9ca3af;">Primary Email ID (Locked / Read-only):</label>
+                <input type="text" value="{{ email_id }}" class="form-control" disabled title="Email is tied to your Google/Account identity and cannot be edited directly.">
+
+                <label style="font-size: 13px; color: #9ca3af;">Mobile Number (Requires OTP verification on change):</label>
+                <input type="text" name="mobile_number" value="{{ mobile_number }}" class="form-control" placeholder="Enter mobile number">
+
+                <label style="font-size: 13px; color: #9ca3af;">New Password {% if is_google_user %}(Set Password for direct login){% endif %}:</label>
+                <input type="password" name="password" class="form-control" placeholder="Leave blank to keep current password">
+
+                <button type="submit" class="btn" style="margin-top: 10px;">Save Profile Changes</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

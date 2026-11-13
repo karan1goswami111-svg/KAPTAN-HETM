@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ group.name }} - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        nav { background: #111827; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; border: 1px solid #3b82f6; }
+        .nav-links a { color: #9ca3af; text-decoration: none; margin-left: 20px; font-weight: 500; }
+        .nav-links a:hover { color: white; }
+        .container { padding: 30px; max-width: 900px; margin: auto; }
+        .card { background: #111827; padding: 25px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; }
+        .form-control { width: 100%; padding: 10px; margin: 8px 0 15px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn { padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; padding: 5px 10px; font-size: 11px; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-warning { background: #059669; }
+        .alert-success { background: rgba(5, 150, 105, 0.2); border: 1px solid #059669; color: #34d399; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #1f2937; }
+        th { color: #9ca3af; font-size: 13px; }
+        .member-tag { background: #1f2937; padding: 6px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; margin: 4px; font-size: 13px; border: 1px solid #374151; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 3000;
+        }
+        .modal-box {
+            background: #111827; border: 2px solid #dc2626; padding: 30px; border-radius: 12px; max-width: 420px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal" style="display: none;">
+        <div class="modal-box">
+            <h2 style="color: #ef4444; margin-top: 0;">⚠️ Are you sure?</h2>
+            <p style="color: #d1d5db; font-size: 14px;">You can't retrieve it again once deleted.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button onclick="executeDelete()" class="btn" style="background: #dc2626;">Yes, Delete</button>
+                <button onclick="closeDeleteModal()" class="btn" style="background: #374151;">No, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Header with Logo -->
+    <nav>
+        <div class="logo-section">
+            <img src="{% static 'core/logo.png' %}" alt="KAPTAN Logo" class="nav-logo">
+            <h3 style="margin: 0;">KAPTAN-HETM &nbsp;|&nbsp; <span style="color: #38bdf8; font-size: 15px;">Group Details</span></h3>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if 'Error' in message.tags or 'Validation' in message.message %}alert-error{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Group Info Card -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h2 style="margin: 0 0 10px 0; color: #3b82f6;">👥 {{ group.name }} {% if group.is_settled %}<span style="color: #34d399; font-size: 14px;">(Settled & Clear)</span>{% endif %}</h2>
+                    <p style="color: #9ca3af; font-size: 14px; margin-bottom: 15px;">{{ group.description|default:"No description provided." }}</p>
+                    <p style="font-size: 14px; margin: 5px 0;"><strong>Total Group Budget:</strong> <span style="color: #34d399;">₹{{ group.group_budget }}</span></p>
+                    <p style="font-size: 14px; margin: 5px 0;"><strong>Total Spent so far:</strong> <span style="color: #60a5fa;">₹{{ total_spent }}</span></p>
+                    {% if group_budget_breached %}
+                        <p style="color: #ef4444; font-weight: bold; margin-top: 8px;">⚠️ Warning: Group Budget has been breached!</p>
+                    {% endif %}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                    <a href="{% url 'export_group_pdf' group.id %}" class="btn" style="background: #059669;">Download PDF Report 📄</a>
+                    {% if not group.is_settled %}
+                        <a href="{% url 'settle_group' group.id %}" class="btn" style="background: #3b82f6;" onclick="return confirm('Settle and clear all dues for this group? This will record the transaction into your personal ledger.');">Mark Settled & Clear Dues ⚖️</a>
+                    {% else %}
+                        <button class="btn" style="background: #059669; cursor: default;" disabled>✅ Settlement Done</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h4 style="margin-top: 20px; color: #e5e7eb;">Members List:</h4>
+            <div>
+                {% for m in members_list %}
+                    <span class="member-tag">
+                        {{ m }}
+                        <a href="#" class="delete-btn" data-url="{% url 'delete_member' group.id m %}" style="color: #ef4444; text-decoration: none; font-weight: bold;">&times;</a>
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Add Expense Form -->
+        {% if not group.is_settled %}
+        <div class="card">
+            <h3>Add Expense to Group</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ expense_form.as_p }}
+                <button type="submit" name="add_expense" class="btn">Add Expense</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="card" style="border-color: #059669; text-align: center;">
+            <h3 style="color: #34d399; margin: 0;">✅ All dues settled and cleared for this group!</h3>
+        </div>
+        {% endif %}
+
+        <!-- Expense Records Table -->
+        <div class="card">
+            <h3>Expense Records</h3>
+            {% if expenses %}
+            <table>
+                <thead>
+                    <tr><th>Title</th><th>Amount</th><th>Paid By</th><th>Date</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for exp in expenses %}
+                    <tr>
+                        <td>{{ exp.title }}</td>
+                        <td>₹{{ exp.amount }}</td>
+                        <td>{{ exp.paid_by }}</td>
+                        <td>{{ exp.date }}</td>
+                        <td><a href="#" class="btn btn-danger delete-btn" data-url="{% url 'delete_expense' exp.id %}">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p style="color: #9ca3af; font-size: 14px;">No expenses added in this group yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Settlement Calculator -->
+        <div class="card">
+            <h3>⚖️ Expense Split & Settlement Calculator</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" name="calculate_expenses" class="btn btn-warning" style="margin-top: 10px;">Calculate Settlements</button>
+            </form>
+
+            {% if settlement_results %}
+            <h4 style="margin-top: 20px; color: #3b82f6;">Settlement Summary (Equal Split)</h4>
+            <table>
+                <thead>
+                    <tr><th>Member Name</th><th>Total Paid</th><th>Equal Share</th><th>Balance (Gets / Pays)</th></tr>
+                </thead>
+                <tbody>
+                    {% for res in settlement_results %}
+                    <tr>
+                        <td><strong>{{ res.member }}</strong></td>
+                        <td>₹{{ res.paid|floatformat:2 }}</td>
+                        <td>₹{{ res.share|floatformat:2 }}</td>
+                        <td>
+                            {% if group.is_settled %}
+                                <span style="color: #34d399; font-weight: bold;">Settled (₹0.00)</span>
+                            {% else %}
+                                {% if res.balance > 0 %}
+                                    <span style="color: #34d399; font-weight: bold;">Gets back ₹{{ res.balance|floatformat:2 }}</span>
+                                {% elif res.balance < 0 %}
+                                    <span style="color: #ef4444; font-weight: bold;">Needs to pay ₹{{ res.balance|floatformat:2|cut:"-" }}</span>
+                                {% else %}
+                                    <span style="color: #9ca3af;">All Settled (₹0.00)</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+        let deleteUrlTarget = "";
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-btn')) {
+                event.preventDefault();
+                deleteUrlTarget = event.target.getAttribute('data-url');
+                document.getElementById('deleteModal').style.display = 'flex';
+            }
+        });
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        function executeDelete() {
+            if (deleteUrlTarget) {
+                window.location.href = deleteUrlTarget;
+            }
+        }
+    </script>
+</body>
+</html>

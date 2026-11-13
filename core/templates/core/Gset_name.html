@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Set Personal Name - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #111827; padding: 40px; border-radius: 12px; border: 1px solid #3b82f6; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .form-control { width: 100%; padding: 12px; margin: 15px 0 20px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #1d4ed8; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="color: #38bdf8; margin-top: 0;">👋 Welcome via Google!</h2>
+        <p style="color: #9ca3af; font-size: 13px; margin-bottom: 20px;">Please enter your personal display name to get started.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <label style="display: block; text-align: left; font-size: 13px; color: #9ca3af;">Personal / Display Name:</label>
+            <input type="text" name="display_name" class="form-control" placeholder="e.g. Karan Giri" required autofocus>
+            <button type="submit" class="btn">Continue to Dashboard ➔</button>
+        </form>
+    </div>
+</body>
+</html>

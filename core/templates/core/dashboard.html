@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        nav { background: #111827; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; border: 1px solid #3b82f6; }
+        .nav-links a { color: #9ca3af; text-decoration: none; margin-left: 20px; font-weight: 500; cursor: pointer; }
+        .nav-links a:hover { color: white; }
+        .container { padding: 30px; max-width: 1000px; margin: auto; }
+        .card { background: #111827; padding: 25px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; }
+        .budget-card-set { border-color: #059669; }
+        .budget-card-unset { border-color: #3b82f6; }
+        .form-control { width: 100%; padding: 10px; margin: 8px 0 15px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn { padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; padding: 5px 10px; font-size: 11px; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-warning { background: #059669; }
+        .group-card { background: #1f2937; border: 1px solid #374151; padding: 15px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .alert-success { background: rgba(5, 150, 105, 0.2); border: 1px solid #059669; color: #34d399; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #1f2937; }
+        th { color: #9ca3af; font-size: 13px; }
+        
+        .sidebar {
+            height: 100%; width: 0; position: fixed; z-index: 2000; top: 0; right: 0;
+            background-color: #111827; overflow-x: hidden; transition: 0.3s; padding-top: 60px;
+            border-left: 1px solid #1f2937; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+        .sidebar a { padding: 12px 30px; text-decoration: none; font-size: 16px; color: #9ca3af; display: block; transition: 0.2s; }
+        .sidebar a:hover { color: #ffffff; background: #1f2937; }
+        .sidebar .closebtn { position: absolute; top: 15px; right: 25px; font-size: 28px; margin-left: 50px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 3000;
+        }
+        .modal-box {
+            background: #111827; border: 2px solid #3b82f6; padding: 30px; border-radius: 12px; max-width: 420px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () { history.go(1); };
+    </script>
+
+    <!-- Month-End / New Month Budget Popup Prompt -->
+    {% if show_month_end_prompt %}
+    <div class="modal-overlay" id="monthEndModal">
+        <div class="modal-box" style="border-color: #f59e0b;">
+            <h2 style="color: #f59e0b; margin-top: 0;">🔔 New Month / Budget Reminder!</h2>
+            <p style="color: #d1d5db; font-size: 14px;">Previous month has ended or a new month has started. Please set your budget and review expenses for <strong>{{ current_real_month }}</strong>!</p>
+            <button onclick="document.getElementById('monthEndModal').style.display='none'" class="btn" style="background: #f59e0b; margin-top: 15px; width: 100%;">Set Budget Now ➔</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal" style="display: none;">
+        <div class="modal-box" style="border-color: #dc2626;">
+            <h2 style="color: #ef4444; margin-top: 0;">⚠️ Are you sure?</h2>
+            <p style="color: #d1d5db; font-size: 14px;">You can't retrieve it again once deleted.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button onclick="executeDelete()" class="btn" style="background: #dc2626;">Yes, Delete</button>
+                <button onclick="closeDeleteModal()" class="btn" style="background: #374151;">No, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fresh Start Confirmation Modal -->
+    <div class="modal-overlay" id="freshStartModal" style="display: none;">
+        <div class="modal-box" style="border-color: #f59e0b;">
+            <h2 style="color: #f59e0b; margin-top: 0;">🔄 Execute Fresh Start?</h2>
+            <p style="color: #d1d5db; font-size: 14px;">This will permanently erase all your personal expenses, monthly budgets, and created groups, giving you a clean slate.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <a href="{% url 'fresh_start' %}" class="btn" style="background: #d97706; text-decoration: none;">Yes, Erase & Restart</a>
+                <button onclick="closeFreshStartModal()" class="btn" style="background: #374151;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal-overlay" id="logoutModal" style="display: none;">
+        <div class="modal-box" style="border-color: #f59e0b;">
+            <h2 style="color: #f59e0b; margin-top: 0;">🚪 Confirm Logout</h2>
+            {% if is_guest %}
+                <p style="color: #d1d5db; font-size: 14px;">As a Guest, logging out will <strong>permanently erase</strong> your temporary data.</p>
+            {% else %}
+                <p style="color: #d1d5db; font-size: 14px;">Are you sure you want to logout? Your registered account data remains safe.</p>
+            {% endif %}
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <a href="{% url 'logout' %}" class="btn" style="background: #d97706; text-decoration: none;">Yes, Logout</a>
+                <button onclick="closeLogoutModal()" class="btn" style="background: #374151;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    {% if show_welcome_modal %}
+    <div class="modal-overlay" id="welcomeModal">
+        <div class="modal-box">
+            {% if is_guest %}
+                <h2 style="color: #f59e0b; margin-top: 0;">👋 Welcome, Guest!</h2>
+                <p style="color: #d1d5db; font-size: 13px;">Guest session is temporary and data clears upon logout.</p>
+            {% elif is_new_user_login %}
+                <h2 style="color: #34d399; margin-top: 0;">🎉 Welcome, {{ username }}!</h2>
+                <p style="color: #d1d5db; font-size: 14px;">Account successfully created. Welcome to KAPTAN-HETM!</p>
+            {% else %}
+                <h2 style="color: #60a5fa; margin-top: 0;">🚀 Welcome Back, {{ username }}!</h2>
+                <p style="color: #d1d5db; font-size: 14px;">Your dashboard is ready.</p>
+            {% endif %}
+            <button onclick="document.getElementById('welcomeModal').style.display='none'" class="btn" style="margin-top: 15px; width: 100%;">Continue ➔</button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if show_warning %}
+    <div class="modal-overlay">
+        <div class="modal-box" style="border-color: #ef4444;">
+            <h2 style="color: #ef4444; margin-top: 0;">⚠️ Budget Breach Warning!</h2>
+            <p style="color: #d1d5db; font-size: 14px;">Total spent (<strong>₹{{ current_month_spent }}</strong>) for {{ selected_month }} has exceeded your budget limit (<strong>₹{{ budget_limit }}</strong>)!</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <a href="{% url 'dashboard' %}?month={{ selected_month }}" class="btn" style="background: #3b82f6;">I Understand</a>
+                <a href="{% url 'dismiss_budget_warning' %}" class="btn" style="background: #dc2626;">Don't Remind Again</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Navigation Header -->
+    <nav>
+        <div class="logo-section">
+            <img src="{% static 'core/logo.png' %}" alt="KAPTAN Logo" class="nav-logo">
+            <h3 style="margin: 0;">KAPTAN-HETM &nbsp;|&nbsp; <span style="color: #38bdf8; font-size: 15px;">{{ header_userid }}</span></h3>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'global_group_expenses' %}">📁 All Groups History</a>
+            <a href="{% url 'info' %}">Info Guide</a>
+            <a onclick="openSidebar()" style="color: #38bdf8;">☰ Menu</a>
+        </div>
+    </nav>
+
+    <!-- Sidebar Drawer -->
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">&times;</a>
+        <h3 style="color: #3b82f6; padding: 0 30px; margin-bottom: 20px;">Menu</h3>
+        <p style="color: #9ca3af; padding: 0 30px; font-size: 13px;">User: <strong>{{ username }}</strong></p>
+        <hr style="border-color: #1f2937; margin: 15px 0;">
+        
+        <a href="{% url 'global_group_expenses' %}">📁 Unified Group Records</a>
+        <a href="{% url 'info' %}">📖 Info Guide</a>
+        <a href="#" onclick="openFreshStartModal()" style="color: #f59e0b;">🔄 Fresh Start (Erase Data)</a>
+        
+        {% if not is_guest %}
+            <a href="{% url 'profile_settings' %}">⚙️ Profile & Security</a>
+        {% endif %}
+        <a href="#" onclick="openLogoutModal()" style="color: #ef4444; margin-top: 20px;">🚪 Logout</a>
+    </div>
+
+    <div class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if 'Error' in message.tags or 'Validation' in message.message %}alert-error{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Month Filter Bar -->
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #161e2e;">
+            <div>
+                <h3 style="margin: 0; color: #38bdf8;">📅 Financial Ledger & Snapshot</h3>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: #9ca3af;">Viewing records and budgets for month: <strong>{{ selected_month }}</strong></p>
+            </div>
+            <form method="GET" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+                <input type="month" name="month" value="{{ selected_month }}" class="form-control" style="margin: 0; padding: 6px;" required>
+                <button type="submit" class="btn" style="padding: 7px 15px;">Filter Month</button>
+            </form>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="card">
+            <h2>Welcome back, {{ username }}! 🚀</h2>
+            <p style="margin: 5px 0 15px 0; font-size: 14px; color: #9ca3af;">Standalone Personal Spent ({{ selected_month }}): <strong style="color: #38bdf8;">₹{{ current_month_spent }}</strong></p>
+            
+            {% if budget_limit > 0 %}
+                <p style="font-size: 14px; margin: 0;">
+                    Budget Limit: <strong style="color: #ef4444;">₹{{ budget_limit }}</strong> | 
+                    Remaining Budget: <strong style="color: #34d399;">₹{{ remaining_budget }}</strong>
+                </p>
+            {% else %}
+                <p style="font-size: 13px; color: #f59e0b; margin: 0;">⚠️ No budget set for {{ selected_month }}. Set your budget below.</p>
+            {% endif %}
+
+            {% if balance_summary %}
+            <div style="margin-top: 15px; padding: 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 6px;">
+                <p style="margin: 0; font-size: 13px; color: #60a5fa;">
+                    <strong>Active Group Dues:</strong>
+                    {% for bs in balance_summary %}
+                        <span style="margin-left: 10px;">
+                            {{ bs.group_name }}: 
+                            {% if bs.type == 'gets_back' %}
+                                <strong style="color: #34d399;">Gets back ₹{{ bs.amount|floatformat:2 }}</strong>
+                            {% else %}
+                                <strong style="color: #ef4444;">Needs to pay ₹{{ bs.amount|floatformat:2 }}</strong>
+                            {% endif %}
+                        </span>
+                    {% endfor %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Set / Edit Monthly Budget Toggle -->
+        <div class="card {% if has_budget_set %}budget-card-set{% else %}budget-card-unset{% endif %}">
+            <h3>{% if has_budget_set %}✏️ Edit Monthly Budget ({{ selected_month }}){% else %}🎯 Set Monthly Budget ({{ selected_month }}){% endif %}</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ budget_form.as_p }}
+                <button type="submit" name="set_budget" class="btn btn-warning">{% if has_budget_set %}Update Budget Limit{% else %}Save Monthly Budget{% endif %}</button>
+            </form>
+        </div>
+
+        <!-- Add Standalone Personal Expense -->
+        <div class="card">
+            <h3>Add Standalone Personal Expense (- ₹ Tracking)</h3>
+            <form action="{% url 'add_personal_expense' %}" method="POST">
+                {% csrf_token %}
+                <label>Expense Title:</label>
+                <input type="text" name="title" class="form-control" placeholder="e.g., Groceries, Fuel" required>
+                <label>Amount (₹):</label>
+                <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount in ₹" required>
+                <label>Date:</label>
+                <input type="date" name="date" class="form-control" required>
+                <button type="submit" class="btn">Add Personal Expense</button>
+            </form>
+
+            {% if personal_expenses %}
+            <h4 style="margin-top: 20px; color: #60a5fa;">Standalone Expenses for {{ selected_month }}</h4>
+            <table>
+                <thead>
+                    <tr><th>Title</th><th>Amount</th><th>Date</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for pe in personal_expenses %}
+                    <tr>
+                        <td>{{ pe.title }}</td>
+                        <td>- ₹{{ pe.amount }}</td>
+                        <td>{{ pe.date }}</td>
+                        <td><a href="#" class="btn btn-danger delete-btn" data-url="{% url 'delete_personal_expense' pe.id %}">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p style="color: #9ca3af; font-size: 13px; margin-top: 15px;">No standalone personal expenses recorded for {{ selected_month }}.</p>
+            {% endif %}
+        </div>
+
+        <!-- Past 6 Months Personal Expenses Historical Record Card -->
+        <div class="card">
+            <h3>📜 Past 6 Months Personal Expenses & Budget History</h3>
+            <p style="color: #9ca3af; font-size: 13px; margin-bottom: 15px;">Review how much you spent and your budget limits over the last 6 months.</p>
+            <table>
+                <thead>
+                    <tr><th>Month</th><th>Total Spent</th><th>Budget Limit</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in past_six_months_summary %}
+                    <tr>
+                        <td><strong>{{ item.month_label }}</strong></td>
+                        <td>₹{{ item.spent }}</td>
+                        <td>₹{{ item.limit }}</td>
+                        <td>
+                            {% if item.breached %}
+                                <span style="color: #ef4444; font-weight: bold;">⚠️ Budget Breached</span>
+                            {% elif item.limit > 0 %}
+                                <span style="color: #34d399; font-weight: bold;">Within Budget</span>
+                            {% else %}
+                                <span style="color: #9ca3af;">No Budget Set</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create Group / Trip -->
+        <div class="card">
+            <h3>Create New Group / Trip (Independent Ledger)</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ group_form.as_p }}
+                <button type="submit" name="create_group" class="btn">Create Group</button>
+            </form>
+        </div>
+
+        <!-- All Created Groups -->
+        <div class="card">
+            <h3>Your Groups & Independent Ledgers</h3>
+            {% if groups %}
+                <div style="margin-top: 15px;">
+                    {% for g in groups %}
+                    <div class="group-card">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: #3b82f6;">👥 {{ g.name }} {% if g.is_settled %}<span style="color: #34d399; font-size: 12px;">(Settled)</span>{% endif %}</h4>
+                            <p style="margin: 0 0 5px 0; font-size: 13px; color: #9ca3af;">{{ g.description|default:"No description" }}</p>
+                            <p style="margin: 0; font-size: 12px; color: #34d399;"><strong>Members:</strong> {{ g.members_list }} &nbsp;|&nbsp; <strong>Budget:</strong> ₹{{ g.group_budget }}</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="{% url 'group_detail' g.id %}" class="btn">View Details ➔</a>
+                            <a href="#" class="btn btn-danger delete-btn" data-url="{% url 'delete_group' g.id %}">Delete</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #9ca3af; font-size: 14px;">No groups created yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let deleteUrlTarget = "";
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-btn')) {
+                event.preventDefault();
+                deleteUrlTarget = event.target.getAttribute('data-url');
+                document.getElementById('deleteModal').style.display = 'flex';
+            }
+        });
+
+        function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; }
+        function executeDelete() { if (deleteUrlTarget) { window.location.href = deleteUrlTarget; } }
+
+        function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+
+        function openFreshStartModal() { document.getElementById('freshStartModal').style.display = 'flex'; }
+        function closeFreshStartModal() { document.getElementById('freshStartModal').style.display = 'none'; }
+
+        function openSidebar() { document.getElementById("mySidebar").style.width = "280px"; }
+        function closeSidebar() { document.getElementById("mySidebar").style.width = "0"; }
+    </script>
+</body>
+</html>

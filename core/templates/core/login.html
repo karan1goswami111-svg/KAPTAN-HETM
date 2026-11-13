@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #111827; padding: 40px; border-radius: 12px; border: 1px solid #1f2937; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        .logo { width: 64px; height: 64px; object-fit: cover; border-radius: 50%; margin-bottom: 15px; border: 2px solid #3b82f6; mix-blend-mode: screen; }
+        .form-control { width: 100%; padding: 12px; margin: 10px 0 20px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 5px; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-google { background: #ffffff; color: #1f2937; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; margin-top: 15px; font-weight: 600; border-radius: 6px; padding: 12px; box-sizing: border-box; }
+        .btn-google:hover { background: #f3f4f6; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: left; }
+        .links { margin-top: 20px; font-size: 13px; color: #9ca3af; display: flex; justify-content: space-between; }
+        .links a { color: #3b82f6; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="{% static 'core/logo.png' %}" alt="Logo" class="logo">
+        <h2 style="margin-bottom: 5px; color: #38bdf8;">KAPTAN-HETM</h2>
+        <p style="color: #9ca3af; font-size: 13px; margin-bottom: 25px;">Financial Ledger & Budget Management</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+       <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="userid" class="form-control" placeholder="UserID / Username" required>
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+            <button type="submit" class="btn">Login to Ledger</button>
+        </form>
+
+        <!-- Direct URL path use kar liya taaki reverse match error kabi na aaye -->
+        <a href="/accounts/google/login/" class="btn-google">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.3 7.23 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.8 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.7 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+            Continue with Google
+        </a>
+
+        <form method="POST" style="margin-top: 15px;">
+            {% csrf_token %}
+            <button type="submit" name="guest_login" class="btn" style="background: #374151;">Continue as Guest</button>
+        </form>
+        <div class="links">
+            <a href="{% url 'register' %}">Register New Account</a>
+            <a href="{% url 'forgot_password' %}">Forgot Password?</a>
+        </div>
+    </div>
+</body>
+</html>

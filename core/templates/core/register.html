@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account - KAPTAN-HETM</title>
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #111827; padding: 40px; border-radius: 12px; border: 1px solid #1f2937; width: 100%; max-width: 400px; text-align: center; }
+        .form-control { width: 100%; padding: 12px; margin: 10px 0 15px 0; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 10px; }
+        .btn:hover { background: #1d4ed8; }
+        .alert-error { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; color: #f87171; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Create an Account</h2>
+        <p style="color: #9ca3af; font-size: 13px; margin-bottom: 20px;">Join KAPTAN-HETM</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">❌ {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="display_name" class="form-control" placeholder="Personal / Display Name" required>
+            <input type="text" name="userid" class="form-control" placeholder="Unique UserID" required>
+            <input type="text" name="mobile" class="form-control" placeholder="Mobile Number (for OTP verification)" required>
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+            <button type="submit" class="btn">Register & Send OTP ➔</button>
+        </form>
+        <p style="margin-top: 20px; font-size: 13px;"><a href="{% url 'login' %}" style="color: #60a5fa; text-decoration: none;">Already have an account? Login</a></p>
+    </div>
+</body>
+</html>

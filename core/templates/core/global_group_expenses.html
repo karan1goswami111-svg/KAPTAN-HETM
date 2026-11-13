@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Groups History - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        nav { background: #111827; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; border: 1px solid #3b82f6; }
+        .container { padding: 30px; max-width: 900px; margin: auto; }
+        .card { background: #111827; padding: 25px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; }
+        .btn { padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; }
+        .btn:hover { background: #1d4ed8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #1f2937; }
+        th { color: #9ca3af; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo-section">
+            <img src="{% static 'core/logo.png' %}" alt="KAPTAN Logo" class="nav-logo">
+            <h3 style="margin: 0;">KAPTAN-HETM &nbsp;|&nbsp; <span style="color: #38bdf8; font-size: 15px;">Unified Group Records</span></h3>
+        </div>
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>📁 Unified Group Expense & Settlement History</h2>
+            <p style="color: #9ca3af; font-size: 13px;">Here is the complete history of all your groups, independent expenses, and dues even if settled.</p>
+        </div>
+
+        {% if all_group_records %}
+            {% for rec in all_group_records %}
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; color: #3b82f6;">👥 {{ rec.group.name }} {% if rec.group.is_settled %}<span style="color: #34d399; font-size: 13px;">(Settled & Clear)</span>{% endif %}</h3>
+                    <a href="{% url 'group_detail' rec.group.id %}" class="btn" style="padding: 5px 10px; font-size: 12px;">Open Group ➔</a>
+                </div>
+                <p style="font-size: 13px; color: #9ca3af; margin: 0 0 10px 0;">{{ rec.group.description|default:"No description" }}</p>
+                <p style="font-size: 13px; margin: 4px 0;"><strong>Members:</strong> {{ rec.group.members_list }}</p>
+                <p style="font-size: 13px; margin: 4px 0;"><strong>Total Group Spend:</strong> ₹{{ rec.total_spent }} | <strong>You Paid:</strong> ₹{{ rec.user_paid }}</p>
+                
+                {% if rec.group.is_settled %}
+                    <p style="font-size: 13px; color: #34d399; margin: 6px 0;"><strong>Status:</strong> Dues Settled & Cleared</p>
+                {% else %}
+                    <p style="font-size: 13px; margin: 6px 0;">
+                        <strong>Balance:</strong> 
+                        {% if rec.user_balance > 0 %}
+                            <span style="color: #34d399;">Gets back ₹{{ rec.user_balance|floatformat:2 }}</span>
+                        {% elif rec.user_balance < 0 %}
+                            <span style="color: #ef4444;">Needs to pay ₹{{ rec.user_balance|floatformat:2|cut:"-" }}</span>
+                        {% else %}
+                            <span style="color: #9ca3af;">All Settled</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+
+                {% if rec.expenses %}
+                <h4 style="margin: 15px 0 5px 0; color: #e5e7eb; font-size: 14px;">Expense Breakdown:</h4>
+                <table>
+                    <thead>
+                        <tr><th>Title</th><th>Amount</th><th>Paid By</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in rec.expenses %}
+                        <tr>
+                            <td>{{ exp.title }}</td>
+                            <td>₹{{ exp.amount }}</td>
+                            <td>{{ exp.paid_by }}</td>
+                            <td>{{ exp.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <p style="color: #9ca3af; font-size: 12px; margin-top: 10px;">No expenses added in this group yet.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="text-align: center;">
+                <p style="color: #9ca3af;">No group records found.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

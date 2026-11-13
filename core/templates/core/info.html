@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Info Guide - KAPTAN-HETM</title>
+    {% load static %}
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; line-height: 1.6; }
+        nav { background: #111827; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; border: 1px solid #3b82f6; }
+        .nav-links a { color: #9ca3af; text-decoration: none; margin-left: 20px; font-weight: 500; }
+        .nav-links a:hover { color: white; }
+        .container { padding: 30px; max-width: 900px; margin: auto; }
+        .card { background: #111827; padding: 30px; border-radius: 12px; border: 1px solid #1f2937; margin-bottom: 30px; }
+        h1 { color: #3b82f6; margin-top: 0; }
+        h2 { color: #60a5fa; margin-top: 25px; border-bottom: 1px solid #1f2937; padding-bottom: 10px; }
+        h3 { color: #9ca3af; margin-top: 20px; font-weight: 600; }
+        p { color: #d1d5db; margin: 10px 0; font-size: 15px; }
+        ul { color: #d1d5db; margin-left: 20px; font-size: 15px; }
+        li { margin-bottom: 8px; }
+        strong { color: #ffffff; }
+        
+        .signature-section { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #1f2937; }
+        .signature-img { width: 220px; height: auto; display: block; margin: 10px auto; mix-blend-mode: screen; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo-section">
+            <img src="{% static 'core/logo.png' %}" alt="KAPTAN Logo" class="nav-logo">
+            <h3 style="margin: 0;">KAPTAN-HETM &nbsp;|&nbsp; <span style="color: #38bdf8; font-size: 15px;">How to Use Guide</span></h3>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>📖 Welcome to KAPTAN-HETM Info Guide</h1>
+            <p>KAPTAN-HETM is your ultimate <strong>Personal & Group Expense Manager</strong>, designed to streamline your finances and make group expense splitting effortless.</p>
+
+            <h2>1. Accounts & Data Security</h2>
+            <h3>Registered Account (Secure & Permanent)</h3>
+            <ul>
+                <li>Requires permanent UserID, Password, and verified Mobile Number.</li>
+                <li>Your data is <strong>safely stored permanently</strong>. Logging out does not delete your data; to permanently delete your account and records, go to Profile Settings / Delete Account.</li>
+            </ul>
+            
+            <h3>Guest Account (Temporary Session)</h3>
+            <ul>
+                <li>Quick access without registration for temporary use or demo.</li>
+                <li><strong>⚠️ CRITICAL: Data is automatically erased permanently once you logout.</strong></li>
+            </ul>
+
+            <h2>2. Personal Expense Tracker</h2>
+            <ul>
+                <li><strong>Add Expense:</strong> Record standalone personal expenses outside of groups.</li>
+                <li><strong>Settlement Ledger Sync:</strong> Settlement credits received or dues paid are recorded as independent ledger items to keep your audit trail fully transparent.</li>
+            </ul>
+
+            <h2>3. Group Expense Manager & Splitter</h2>
+            <ul>
+                <li>Create groups, add members with exact matching names, and record shared expenses.</li>
+                <li>Use the **Settlement Calculator** to view individual balances.</li>
+                <li>Click **"Mark Settled & Clear Dues"** to finalize the settlement and synchronize records into your personal ledger.</li>
+            </ul>
+
+            <h2>4. Personal Monthly Budget & Analytics</h2>
+            <ul>
+                <li>Set monthly spending limits and monitor budget breaches through the interactive year/month analytics chart.</li>
+            </ul>
+
+            <p style="margin-top: 30px; text-align: center; color: #a3e635; font-weight: bold;">Master your captaincy with KAPTAN-HETM! 🚀</p>
+            
+            <!-- Signature Section at the bottom using signature.png -->
+            <div class="signature-section">
+                <p style="margin-bottom: 2px; color: #9ca3af; font-size: 13px;">Created & Maintained by:</p>
+                <img src="{% static 'core/signature.png' %}" alt="Karan Signature" class="signature-img">
+                <p style="color: #60a5fa; font-weight: bold; margin-top: 2px; font-size: 14px;">KARAN GIRI</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
