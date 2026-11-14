@@ -17,8 +17,10 @@ class CoreConfig(AppConfig):
                 }
             )
             
-            # 2. Google Login ka error hatane ke liye
+            # 2. Google Login ka error hatane ke liye (Automatic SocialApp creation)
             from allauth.socialaccount.models import SocialApp
+            
+            # Yahan apni real Google Client ID aur Secret daal de (ya Render env variables use kar)
             client_id = os.environ.get('GOOGLE_CLIENT_ID', 'YAHAN_APNI_GOOGLE_CLIENT_ID_DAAL_DENA')
             client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', 'YAHAN_APNI_GOOGLE_SECRET_DAAL_DENA')
             
