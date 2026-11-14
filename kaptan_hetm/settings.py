@@ -6,9 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-your-secret-key-here'
 
 # Local development ke liye abhi True rakha hai. Jab server par live deploy karega tab ise False kar lena.
-DEBUG = True
+DEBUG = True  # Temporary error dekhne ke liye True rakha hai
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS =[
+    'https://kaptan-hetm.onrender.com',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
