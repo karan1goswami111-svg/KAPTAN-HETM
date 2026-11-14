@@ -1,5 +1,8 @@
 import csv
 import random
+import re
+import os
+import requests
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
@@ -15,10 +18,31 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from dateutil.relativedelta import relativedelta
 
+def send_sms_otp(mobile, otp):
+    """Sends real 6-digit OTP via Fast2SMS if API key is configured in Render environment variables."""
+    api_key = os.environ.get('FAST2SMS_API_KEY', '')
+    if api_key:
+        try:
+            url = "https://www.fast2sms.com/dev/bulkV2"
+            querystring = {
+                "authorization": api_key,
+                "sender_id": "TXTIND",
+                "message": f"Your KAPTAN-HETM verification OTP is {otp}. Do not share this with anyone.",
+                "language": "english",
+                "route": "v3",
+                "numbers": mobile
+            }
+            headers = {'cache-control': "no-cache"}
+            response = requests.get(url, headers=headers, params=querystring, timeout=5)
+            if response.status_code == 200:
+                return True
+        except Exception:
+            pass
+    return False
+
 def login_view(request):
     if request.method == 'POST':
         if 'guest_login' in request.POST:
-            # 1. Purane guest session ka saara data database se permanently wipe karo
             old_guest_id = request.session.get('guest_id')
             if old_guest_id:
                 PersonalExpense.objects.filter(guest_identifier=old_guest_id).delete()
@@ -26,7 +50,6 @@ def login_view(request):
                 ArchivedGroupHistory.objects.filter(guest_identifier=old_guest_id).delete()
                 Group.objects.filter(created_by=None, guest_identifier=old_guest_id).delete()
             
-            # 2. Session flush karke bilkul fresh naya guest ID generate karo
             request.session.flush()
             
             new_guest_id = 'guest_' + str(random.randint(100000, 999999))
@@ -124,6 +147,11 @@ def register_view(request):
             messages.error(request, "Validation Error: All fields are required!")
             return render(request, 'core/register.html')
 
+        # Strict 10-digit Indian Mobile Number Validation (Starts with 6, 7, 8, or 9)
+        if not re.match(r'^[6-9]\d{9}$', mobile):
+            messages.error(request, "Validation Error: Please enter a valid 10-digit Indian mobile number!")
+            return render(request, 'core/register.html')
+
         if User.objects.filter(username=userid).exists():
             messages.error(request, "Validation Error: UserID already exists! Please choose another.")
             return render(request, 'core/register.html')
@@ -141,7 +169,14 @@ def register_view(request):
         
         otp = str(random.randint(100000, 999999))
         request.session['reg_otp'] = otp
-        messages.success(request, f"OTP sent to mobile! (Demo OTP: {otp})")
+        
+        # Try sending real SMS via Fast2SMS (falls back to demo message if API key is absent)
+        sent_real = send_sms_otp(mobile, otp)
+        if sent_real:
+            messages.success(request, "Real 6-digit OTP sent successfully to your mobile number!")
+        else:
+            messages.success(request, f"OTP sent to mobile! (Demo OTP: {otp})")
+            
         return redirect('verify_reg_otp')
         
     return render(request, 'core/register.html')
@@ -188,13 +223,23 @@ def forgot_password_view(request):
             messages.error(request, "Validation Error: Please enter your registered mobile number.")
             return render(request, 'core/forgot_password.html')
 
+        if not re.match(r'^[6-9]\d{9}$', mobile):
+            messages.error(request, "Validation Error: Please enter a valid 10-digit Indian mobile number.")
+            return render(request, 'core/forgot_password.html')
+
         profile = UserProfile.objects.filter(mobile_number=mobile).first()
         if profile and profile.user:
             otp = str(random.randint(100000, 999999))
             profile.otp_code = otp
             profile.save()
             request.session['reset_user_id'] = profile.user.id
-            messages.success(request, f"OTP sent to mobile! (Demo OTP: {otp})")
+            
+            sent_real = send_sms_otp(mobile, otp)
+            if sent_real:
+                messages.success(request, "Real 6-digit OTP sent successfully to your mobile number!")
+            else:
+                messages.success(request, f"OTP sent to mobile! (Demo OTP: {otp})")
+                
             return redirect('verify_otp')
         else:
             messages.error(request, "Validation Error: This mobile number is not registered with any account!")
@@ -263,6 +308,10 @@ def profile_settings_view(request):
             messages.success(request, "Password successfully updated/created!")
 
         if new_mobile and new_mobile != (profile.mobile_number or ""):
+            if not re.match(r'^[6-9]\d{9}$', new_mobile):
+                messages.error(request, "Validation Error: Please enter a valid 10-digit Indian mobile number.")
+                return redirect('profile_settings')
+
             if UserProfile.objects.filter(mobile_number=new_mobile).exclude(user=user).exists():
                 messages.error(request, "Validation Error: This mobile number is already used by another account!")
                 return redirect('profile_settings')
@@ -271,7 +320,13 @@ def profile_settings_view(request):
             profile.otp_code = otp
             profile.save()
             request.session['pending_mobile'] = new_mobile
-            messages.success(request, f"OTP sent to new mobile number! (Demo OTP: {otp})")
+            
+            sent_real = send_sms_otp(new_mobile, otp)
+            if sent_real:
+                messages.success(request, "Real 6-digit OTP sent to your new mobile number!")
+            else:
+                messages.success(request, f"OTP sent to new mobile number! (Demo OTP: {otp})")
+                
             return redirect('verify_profile_otp')
 
         return redirect('profile_settings')
@@ -317,7 +372,10 @@ def verify_profile_otp_view(request):
     return render(request, 'core/verify_otp.html', {'username_hint': pending_mobile})
 
 def logout_view(request):
+    # Detect if user was logged in as a guest
+    was_guest = request.session.get('is_guest_session', False) or bool(request.session.get('guest_id'))
     g_id = request.session.get('guest_id')
+    
     if g_id:
         PersonalExpense.objects.filter(guest_identifier=g_id).delete()
         Budget.objects.filter(guest_name="Guest", user=None).delete()
@@ -326,7 +384,12 @@ def logout_view(request):
     
     logout(request)
     request.session.flush()
-    messages.success(request, "Logged out successfully. All guest data has been purged.")
+    
+    # Corrected Logout Message Condition
+    if was_guest:
+        messages.success(request, "All guest data has been purged.")
+    else:
+        messages.success(request, "Logged out successfully. Login again.")
     return redirect('login')
 
 def delete_account_view(request):
@@ -473,7 +536,6 @@ def dashboard_view(request):
                 messages.success(request, f"Monthly budget successfully saved/updated for {m_year}!")
                 return redirect(f'/dashboard/?month={m_year}')
 
-    # STRICT FILTERING: Guest sees ONLY groups created by their specific guest_identifier
     if user_obj:
         groups = Group.objects.filter(created_by=user_obj).order_by('-id')
         personal_expenses_db = PersonalExpense.objects.filter(user=user_obj).order_by('-date')
